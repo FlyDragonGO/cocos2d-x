@@ -117,7 +117,7 @@ class HeadTaskHandler extends AsyncHttpResponseHandler {
     @Override
     public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
         Boolean acceptRanges = false;
-        for (int i = 0; i < headers.length; ++i) {
+        for (int i = 0; headers != null && i < headers.length; ++i) {
             Header elem = headers[i];
             if (elem.getName().equals("Accept-Ranges")) {
                 acceptRanges = elem.getValue().equals("bytes");
@@ -136,7 +136,12 @@ class HeadTaskHandler extends AsyncHttpResponseHandler {
 
     @Override
     public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable throwable) {
-        LogD("onFailure(code:" + statusCode + " headers:" + headers + " throwable:" + throwable + " id:" + _id);
+        LogD("onFailure(code:" + statusCode + " headers:" + headers + " throwable:" + throwable + " id:" + _id + " url:" + _url);
+        if (throwable instanceof javax.net.ssl.SSLHandshakeException) {
+            _url = _url.replace("https", "http");
+            onSuccess(200, headers, responseBody);
+            return;
+        }
         String errStr = "";
         if (null != throwable) {
             errStr = throwable.toString();
@@ -305,7 +310,7 @@ public class Cocos2dxDownloader {
             downloader._httpClient.setTimeout(timeoutInSeconds * 1000);
         }
         // downloader._httpClient.setMaxRetriesAndTimeout(3, timeoutInSeconds * 1000);
-        downloader._httpClient.allowRetryExceptionClass(javax.net.ssl.SSLException.class);
+        //downloader._httpClient.allowRetryExceptionClass(javax.net.ssl.SSLException.class);
 
         downloader._tempFileNameSufix = tempFileNameSufix;
         downloader._countOfMaxProcessingTasks = countOfMaxProcessingTasks;
